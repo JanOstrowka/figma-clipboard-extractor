@@ -10,8 +10,6 @@ import {
   extractFigmaClipboard,
   type FigmaClipboardData,
 } from "./lib/clipboard";
-import { detectFigmaComponent } from "./utils/detectFigmaComponent";
-
 const MIN_LOADING_TIME = 300;
 
 function App() {
@@ -61,14 +59,6 @@ function App() {
         );
         setClipboardData(null); // Don't show test/export sections for invalid data
         return;
-      }
-
-      // Detect if this is a real component
-      const detection = detectFigmaComponent(data.displayName);
-      
-      // Show warning if there's any concern (never block extraction)
-      if (detection.message) {
-        setWarning(detection.message);
       }
 
       setClipboardData(data);

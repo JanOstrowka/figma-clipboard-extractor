@@ -32,14 +32,7 @@ export function TestTab({ data }: TestTabProps) {
     }
   };
 
-  // Generate button text based on component name
-  const getButtonText = () => {
-    if (copied) return "Copied!";
-    if (data.displayName) {
-      return `Copy ${data.displayName}`;
-    }
-    return "Copy to Clipboard";
-  };
+  const buttonText = copied ? "Copied!" : "Copy to Clipboard";
 
   return (
     <div className="space-y-4">
@@ -70,13 +63,13 @@ export function TestTab({ data }: TestTabProps) {
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
-                {getButtonText()}
+                {buttonText}
               </motion.span>
             </AnimatePresence>
             {/* Invisible placeholder to maintain button size */}
             <span className="flex items-center gap-2 opacity-0 pointer-events-none">
               <Copy className="h-4 w-4" />
-              {getButtonText()}
+              {buttonText}
             </span>
           </Button>
 
