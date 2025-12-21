@@ -86,7 +86,7 @@ function App() {
   };
 
   // Custom ease-out curve for smooth animations (recommended by Emil Kowalski)
-  const customEaseOut = [0.16, 1, 0.3, 1];
+  const customEaseOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
   const containerVariants = {
     hidden: { opacity: 0 },
