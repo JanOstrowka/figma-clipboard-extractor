@@ -1,0 +1,26 @@
+{
+  "description": "Figma primitive and auto-generated element names. Used to identify things that are likely NOT design system components.",
+  "primitives": [
+    "Boolean",
+    "Circle",
+    "Component",
+    "Ellipse",
+    "Exclude",
+    "Frame",
+    "Group",
+    "Image",
+    "Instance",
+    "Intersect",
+    "Line",
+    "Mask",
+    "Oval",
+    "Polygon",
+    "Rectangle",
+    "Slice",
+    "Star",
+    "Subtract",
+    "Text",
+    "Union",
+    "Vector"
+  ]
+}
