@@ -11,12 +11,12 @@ function CodeBlockSkeletonBase({ lineCount }: { lineCount: number }) {
   return (
     <div className="relative">
       {/* Copy button skeleton */}
-      <div className="absolute right-2 top-2">
+      <div className="absolute right-2 top-2 z-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
-          className="h-8 w-20 bg-muted rounded animate-pulse"
+          className="h-8 w-8 bg-zinc-800 rounded-md animate-pulse"
         />
       </div>
       

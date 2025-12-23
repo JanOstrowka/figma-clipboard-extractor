@@ -13,7 +13,7 @@ export function Header({ onAboutClick }: HeaderProps) {
           Extract Figma clipboard data to add "Copy to Figma" buttons to your design system.{" "}
           <button
             onClick={onAboutClick}
-            className="inline-flex items-center justify-center rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            className="inline-flex items-center justify-center rounded-md px-1 py-0.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
           >
             Learn more
           </button>

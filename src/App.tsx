@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Header } from "./components/Header";
 import { StepCard } from "./components/StepCard";
@@ -14,6 +14,7 @@ const MIN_LOADING_TIME = 300;
 
 function App() {
   useSystemTheme();
+  const isExtractingRef = useRef(false);
 
   const [clipboardData, setClipboardData] = useState<FigmaClipboardData | null>(
     null
@@ -25,8 +26,13 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [initialAnimationComplete, setInitialAnimationComplete] = useState(false);
+  const [autoHighlightCard3, setAutoHighlightCard3] = useState(false);
 
-  const handleExtract = async () => {
+  const handleExtract = useCallback(async () => {
+    // Prevent multiple simultaneous extractions
+    if (isExtractingRef.current) return;
+    isExtractingRef.current = true;
+
     setIsLoading(true);
     setError(null);
     setWarning(null);
@@ -63,6 +69,7 @@ function App() {
 
       setClipboardData(data);
       setSuccess(true);
+      setAutoHighlightCard3(true);
 
       // Reset success state after animation
       setTimeout(() => setSuccess(false), 2000);
@@ -72,8 +79,35 @@ function App() {
       );
     } finally {
       setIsLoading(false);
+      isExtractingRef.current = false;
     }
-  };
+  }, []);
+
+  // Global keyboard shortcut: Cmd+V (Mac) or Ctrl+V (Windows) triggers extraction
+  useEffect(() => {
+    const handlePaste = (e: KeyboardEvent) => {
+      // Check for Cmd+V (Mac) or Ctrl+V (Windows)
+      const isPasteShortcut = (e.metaKey || e.ctrlKey) && e.key === "v";
+      
+      if (!isPasteShortcut) return;
+
+      // Don't intercept paste if user is in an input, textarea, or contenteditable
+      const activeElement = document.activeElement;
+      const isEditableElement =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement instanceof HTMLElement && activeElement.isContentEditable);
+
+      if (isEditableElement) return;
+
+      // Prevent default paste behavior and trigger extraction
+      e.preventDefault();
+      handleExtract();
+    };
+
+    window.addEventListener("keydown", handlePaste);
+    return () => window.removeEventListener("keydown", handlePaste);
+  }, [handleExtract]);
 
   // Custom ease-out curve for smooth animations (recommended by Emil Kowalski)
   const customEaseOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -128,10 +162,15 @@ function App() {
         >
           <motion.div 
             variants={itemVariants}
-            onMouseEnter={() => initialAnimationComplete && setHoveredCard(1)}
+            onMouseEnter={() => {
+              if (initialAnimationComplete) {
+                setHoveredCard(1);
+                setAutoHighlightCard3(false);
+              }
+            }}
             onMouseLeave={() => initialAnimationComplete && setHoveredCard(null)}
             animate={{
-              opacity: !initialAnimationComplete || hoveredCard === null || hoveredCard === 1 ? 1 : 0.5,
+              opacity: !initialAnimationComplete || (hoveredCard === null && !autoHighlightCard3) || hoveredCard === 1 ? 1 : 0.5,
             }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
@@ -144,17 +183,22 @@ function App() {
 
           <motion.div 
             variants={itemVariants}
-            onMouseEnter={() => initialAnimationComplete && setHoveredCard(2)}
+            onMouseEnter={() => {
+              if (initialAnimationComplete) {
+                setHoveredCard(2);
+                setAutoHighlightCard3(false);
+              }
+            }}
             onMouseLeave={() => initialAnimationComplete && setHoveredCard(null)}
             animate={{
-              opacity: !initialAnimationComplete || hoveredCard === null || hoveredCard === 2 ? 1 : 0.5,
+              opacity: !initialAnimationComplete || (hoveredCard === null && !autoHighlightCard3) || hoveredCard === 2 ? 1 : 0.5,
             }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
             <StepCard 
               step={2} 
               title="Extract the clipboard data"
-              description="Reads your clipboard and extracts the Figma metadata."
+              description="Just press ⌘V (Mac) or Ctrl+V (Windows) to paste, or click the button below."
             >
               <ExtractButton
                 onClick={handleExtract}
@@ -168,10 +212,15 @@ function App() {
 
           <motion.div 
             variants={itemVariants}
-            onMouseEnter={() => initialAnimationComplete && setHoveredCard(3)}
+            onMouseEnter={() => {
+              if (initialAnimationComplete) {
+                setHoveredCard(3);
+                setAutoHighlightCard3(false);
+              }
+            }}
             onMouseLeave={() => initialAnimationComplete && setHoveredCard(null)}
             animate={{
-              opacity: !initialAnimationComplete || hoveredCard === null || hoveredCard === 3 ? 1 : 0.5,
+              opacity: !initialAnimationComplete || hoveredCard === null || hoveredCard === 3 || autoHighlightCard3 ? 1 : 0.5,
             }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >

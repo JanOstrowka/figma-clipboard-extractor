@@ -1,16 +1,13 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState, useMemo, memo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { CodeBlock } from "./CodeBlock";
+import { AnimatedCodeBlock } from "./AnimatedCodeBlock";
 import { EmptyState } from "./EmptyState";
 import { TestTab } from "./TestTab";
 import { 
   TestTabSkeleton, 
   RawTabSkeleton, 
-  FigmaTabSkeleton, 
-  HtmlTabSkeleton, 
-  StorybookTabSkeleton 
 } from "./SkeletonLoader";
 import type { FigmaClipboardData } from "@/lib/clipboard";
 import {
@@ -24,58 +21,62 @@ interface OutputTabsProps {
   data: FigmaClipboardData | null;
 }
 
+type TabValue = "test" | "raw" | "figma" | "html" | "storybook";
+type CodeTabValue = "raw" | "figma" | "html" | "storybook";
+
+// Memoized tab content components to prevent re-renders
+const MemoizedTestTab = memo(TestTab);
+
+// Check if a tab is a code tab
+const isCodeTab = (tab: TabValue): tab is CodeTabValue => {
+  return tab === "raw" || tab === "figma" || tab === "html" || tab === "storybook";
+};
+
 export function OutputTabs({ data }: OutputTabsProps) {
-  const [activeTab, setActiveTab] = useState("test");
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | "auto">("auto");
+  const [activeTab, setActiveTab] = useState<TabValue>("test");
   const [dataKey, setDataKey] = useState(0);
   const [isReloading, setIsReloading] = useState(false);
   const prevDataRef = useRef<FigmaClipboardData | null>(null);
 
+  // Memoize formatted content to avoid recalculating on every render
+  const formattedContent = useMemo(() => {
+    if (!data) return null;
+    return {
+      raw: formatRawClipboard(data),
+      figma: formatFigmaPayload(data),
+      html: formatHtmlPayload(data),
+      storybook: formatStorybookParams(data),
+    };
+  }, [data]);
+
+  // Get the current code for the shared code block
+  const currentCode = useMemo(() => {
+    if (!formattedContent || !isCodeTab(activeTab)) return "";
+    return formattedContent[activeTab];
+  }, [formattedContent, activeTab]);
+
   // Trigger reload animation when data changes
   useEffect(() => {
     if (data && prevDataRef.current && data !== prevDataRef.current) {
-      // Data has changed, show loading state
       setIsReloading(true);
-      
-      // Show skeleton for 300ms before revealing new content
       const timer = setTimeout(() => {
         setDataKey((prev) => prev + 1);
         setIsReloading(false);
       }, 300);
-
       return () => clearTimeout(timer);
     } else if (data && !prevDataRef.current) {
-      // First time loading data, no skeleton needed
       setDataKey((prev) => prev + 1);
     }
-    
     prevDataRef.current = data;
   }, [data]);
 
-  useEffect(() => {
-    if (contentRef.current) {
-      const updateHeight = () => {
-        if (contentRef.current) {
-          const newHeight = contentRef.current.scrollHeight;
-          setHeight(newHeight);
-        }
-      };
-
-      const resizeObserver = new ResizeObserver(() => {
-        updateHeight();
-      });
-
-      resizeObserver.observe(contentRef.current);
-      
-      // Initial height measurement
-      updateHeight();
-
-      return () => {
-        resizeObserver.disconnect();
-      };
+  // Render skeleton for a tab
+  const renderSkeleton = useCallback(() => {
+    if (activeTab === "test") {
+      return <TestTabSkeleton />;
     }
-  }, [activeTab, dataKey]);
+    return <RawTabSkeleton />;
+  }, [activeTab]);
 
   return (
     <Card>
@@ -96,7 +97,7 @@ export function OutputTabs({ data }: OutputTabsProps) {
           defaultValue="test" 
           className="w-full"
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(value) => setActiveTab(value as TabValue)}
         >
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="test">Test</TabsTrigger>
@@ -106,57 +107,36 @@ export function OutputTabs({ data }: OutputTabsProps) {
             <TabsTrigger value="storybook">Storybook</TabsTrigger>
           </TabsList>
 
-          <div className="relative">
-            <motion.div
-              animate={{ height: height === "auto" ? "auto" : height }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full"
-            >
-              <div ref={contentRef}>
-                {!data ? (
-                  <div className="mt-4">
-                    <EmptyState />
-                  </div>
-                ) : isReloading ? (
-                  <div className="mt-4">
-                    {activeTab === "test" && <TestTabSkeleton />}
-                    {activeTab === "raw" && <RawTabSkeleton />}
-                    {activeTab === "figma" && <FigmaTabSkeleton />}
-                    {activeTab === "html" && <HtmlTabSkeleton />}
-                    {activeTab === "storybook" && <StorybookTabSkeleton />}
-                  </div>
+          <div className="pt-4">
+            {!data ? (
+              <EmptyState />
+            ) : isReloading ? (
+              renderSkeleton()
+            ) : (
+              <AnimatePresence mode="wait" initial={false}>
+                {activeTab === "test" ? (
+                  <motion.div
+                    key={`${dataKey}-test`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    <MemoizedTestTab data={data} />
+                  </motion.div>
                 ) : (
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={dataKey}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    >
-                      <TabsContent value="test" className="mt-4">
-                        <TestTab data={data} />
-                      </TabsContent>
-
-                      <TabsContent value="raw" className="mt-4">
-                        <CodeBlock code={formatRawClipboard(data)} />
-                      </TabsContent>
-
-                      <TabsContent value="figma" className="mt-4">
-                        <CodeBlock code={formatFigmaPayload(data)} />
-                      </TabsContent>
-
-                      <TabsContent value="html" className="mt-4">
-                        <CodeBlock code={formatHtmlPayload(data)} />
-                      </TabsContent>
-
-                      <TabsContent value="storybook" className="mt-4">
-                        <CodeBlock code={formatStorybookParams(data)} />
-                      </TabsContent>
-                    </motion.div>
-                  </AnimatePresence>
+                  <motion.div
+                    key={`${dataKey}-code`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    <AnimatedCodeBlock code={currentCode} />
+                  </motion.div>
                 )}
-              </div>
-            </motion.div>
+              </AnimatePresence>
+            )}
           </div>
         </Tabs>
       </CardContent>

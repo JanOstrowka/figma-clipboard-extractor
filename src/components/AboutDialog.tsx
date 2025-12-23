@@ -28,16 +28,16 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
 
           <section>
             <h3 className="font-semibold text-base mb-2">What this does</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground leading-[140%]">
               Adds a "Copy to Figma" button to your design system website. Designers can grab ready-made Figma components directly from the docs instead of digging through library files.
             </p>
           </section>
 
           <section>
             <h3 className="font-semibold text-base mb-2">Why it's useful</h3>
-            <ul className="text-muted-foreground space-y-2 list-none">
-              <li>• Designers actually use the docs when components are one click away</li>
-              <li>• Creates natural pressure to keep the website complete and current</li>
+            <ul className="text-muted-foreground space-y-2 list-none leading-[140%]">
+              <li className="leading-[140%]">• Designers actually use the docs when components are one click away</li>
+              <li className="leading-[140%]">• Creates natural pressure to keep the website complete and current</li>
             </ul>
           </section>
 
@@ -58,21 +58,36 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
                 href="https://github.com/JanOstrowka"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                className="inline-flex items-center justify-center rounded-md px-1 py-0.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 Jan Ostrówka↗
               </a>{" "}
               @ n8n
             </p>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-0">
               Implementation based on clipboard research by{" "}
               <a
                 href="https://github.com/dgtlntv/figma-copy-button-test"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-md px-2 py-1 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                className="inline-flex items-center justify-center rounded-md px-1 py-0.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 dgtlntv↗
+              </a>
+            </p>
+          </section>
+
+          <section className="pt-4 border-t border-border">
+            <h3 className="font-semibold text-base mb-2">Source code</h3>
+            <p className="text-muted-foreground">
+              This project is open source and available on{" "}
+              <a
+                href="https://github.com/JanOstrowka/figma-clipboard-extractor"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md px-1 py-0.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              >
+                GitHub↗
               </a>
             </p>
           </section>
