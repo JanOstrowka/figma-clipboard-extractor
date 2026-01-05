@@ -1,19 +1,15 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import { Header } from "./components/Header";
 import { StepCard } from "./components/StepCard";
 import { ExtractButton } from "./components/ExtractButton";
 import { OutputTabs } from "./components/OutputTabs";
+import { AboutDialog } from "./components/AboutDialog";
 import { useSystemTheme } from "./hooks/useTheme";
 import {
   extractFigmaClipboard,
   type FigmaClipboardData,
 } from "./lib/clipboard";
-
-// Lazy load non-critical components
-const AboutDialog = lazy(() => 
-  import("./components/AboutDialog").then(m => ({ default: m.AboutDialog }))
-);
-
 const MIN_LOADING_TIME = 300;
 
 function App() {
@@ -29,6 +25,7 @@ function App() {
   const [success, setSuccess] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [initialAnimationComplete, setInitialAnimationComplete] = useState(false);
   const [autoHighlightCard3, setAutoHighlightCard3] = useState(false);
 
   const handleExtract = useCallback(async () => {
@@ -112,48 +109,91 @@ function App() {
     return () => window.removeEventListener("keydown", handlePaste);
   }, [handleExtract]);
 
-  // Calculate opacity for hover effect (only after mount, no initial animation)
-  const getCardOpacity = (cardNumber: number) => {
-    // If no card is hovered and card3 isn't auto-highlighted, all cards are full opacity
-    if (hoveredCard === null && !autoHighlightCard3) return 1;
-    // If this card is hovered, full opacity
-    if (hoveredCard === cardNumber) return 1;
-    // Special case: card 3 auto-highlighted after extraction
-    if (autoHighlightCard3 && cardNumber === 3) return 1;
-    // Otherwise, dimmed
-    return 0.5;
+  // Custom ease-out curve for smooth animations (recommended by Emil Kowalski)
+  const customEaseOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2, // Reduced stagger for faster sequence
+        delayChildren: 0.8, // Start cards after header
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4, // 400ms as requested
+        ease: customEaseOut,
+      },
+    },
   };
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
       <div className="max-w-3xl mx-auto px-6 py-12 min-h-screen">
-        <Header onAboutClick={() => setAboutOpen(true)} />
+        <motion.div
+          initial={{ 
+            opacity: 0,
+          }}
+          animate={{ 
+            opacity: 1,
+          }}
+          transition={{ 
+            duration: 0.8,
+            ease: "easeOut",
+          }}
+        >
+          <Header onAboutClick={() => setAboutOpen(true)} />
+        </motion.div>
 
-        <div className="space-y-6 mt-10">
-          <div 
-            className="transition-opacity duration-200"
-            style={{ opacity: getCardOpacity(1) }}
+        <motion.div
+          className="space-y-6 mt-10"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          onAnimationComplete={() => setInitialAnimationComplete(true)}
+        >
+          <motion.div 
+            variants={itemVariants}
             onMouseEnter={() => {
-              setHoveredCard(1);
-              setAutoHighlightCard3(false);
+              if (initialAnimationComplete) {
+                setHoveredCard(1);
+                setAutoHighlightCard3(false);
+              }
             }}
-            onMouseLeave={() => setHoveredCard(null)}
+            onMouseLeave={() => initialAnimationComplete && setHoveredCard(null)}
+            animate={{
+              opacity: !initialAnimationComplete || (hoveredCard === null && !autoHighlightCard3) || hoveredCard === 1 ? 1 : 0.5,
+            }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
             <StepCard 
               step={1} 
               title="Copy a component in Figma"
               description="Use ⌘C (Mac) or Ctrl+C (Windows) to copy any component"
             />
-          </div>
+          </motion.div>
 
-          <div 
-            className="transition-opacity duration-200"
-            style={{ opacity: getCardOpacity(2) }}
+          <motion.div 
+            variants={itemVariants}
             onMouseEnter={() => {
-              setHoveredCard(2);
-              setAutoHighlightCard3(false);
+              if (initialAnimationComplete) {
+                setHoveredCard(2);
+                setAutoHighlightCard3(false);
+              }
             }}
-            onMouseLeave={() => setHoveredCard(null)}
+            onMouseLeave={() => initialAnimationComplete && setHoveredCard(null)}
+            animate={{
+              opacity: !initialAnimationComplete || (hoveredCard === null && !autoHighlightCard3) || hoveredCard === 2 ? 1 : 0.5,
+            }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
             <StepCard 
               step={2} 
@@ -168,26 +208,27 @@ function App() {
                 success={success}
               />
             </StepCard>
-          </div>
+          </motion.div>
 
-          <div 
-            className="transition-opacity duration-200"
-            style={{ opacity: getCardOpacity(3) }}
+          <motion.div 
+            variants={itemVariants}
             onMouseEnter={() => {
-              setHoveredCard(3);
-              setAutoHighlightCard3(false);
+              if (initialAnimationComplete) {
+                setHoveredCard(3);
+                setAutoHighlightCard3(false);
+              }
             }}
-            onMouseLeave={() => setHoveredCard(null)}
+            onMouseLeave={() => initialAnimationComplete && setHoveredCard(null)}
+            animate={{
+              opacity: !initialAnimationComplete || hoveredCard === null || hoveredCard === 3 || autoHighlightCard3 ? 1 : 0.5,
+            }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
             <OutputTabs data={clipboardData} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <Suspense fallback={null}>
-          {aboutOpen && (
-            <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
-          )}
-        </Suspense>
+        <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
       </div>
     </div>
   );

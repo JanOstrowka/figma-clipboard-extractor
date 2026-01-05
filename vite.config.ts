@@ -12,28 +12,20 @@ export default defineConfig({
     },
   },
   build: {
-    // Enable code splitting for better caching and smaller initial bundle
+    // Optimize chunk splitting for better caching
     rollupOptions: {
       output: {
         manualChunks: {
-          // Split framer-motion into its own chunk (heavy library, not needed for FCP)
+          // Split heavy dependencies into separate chunks
           'framer-motion': ['framer-motion'],
-          // Split Radix UI components
-          'radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-slot'
-          ],
-          // Split analytics (not needed for FCP)
-          'analytics': ['@vercel/analytics', '@vercel/speed-insights'],
+          'radix': ['@radix-ui/react-dialog', '@radix-ui/react-tabs', '@radix-ui/react-slot'],
+          'vendor': ['react', 'react-dom'],
         },
       },
     },
-    // Ensure CSS is inlined in the initial chunk for faster FCP
-    cssCodeSplit: true,
-    // Generate source maps for debugging
-    sourcemap: false,
-    // Minify for production
+    // Target modern browsers for smaller bundles
+    target: 'esnext',
+    // Enable minification
     minify: 'esbuild',
   },
 })
